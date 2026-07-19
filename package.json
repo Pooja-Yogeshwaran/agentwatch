@@ -37,6 +37,7 @@
     "agentwatch": "node bin/agentwatch"
   },
   "dependencies": {
+    "cross-spawn": "^7.0.6",
     "ignore": "^5.3.2",
     "js-yaml": "^4.1.0",
     "mockttp": "^3.15.0"

@@ -5,7 +5,9 @@
 // implying a clean result it never observed.
 const os = require('os');
 const mockttp = require('mockttp');
-const { spawn } = require('child_process');
+// cross-spawn resolves Windows .cmd/.bat shims (npm, codex, claude, …) and
+// handles PATHEXT + arg escaping — plain child_process.spawn can't launch those.
+const spawn = require('cross-spawn');
 const { ensureCa, caEnv } = require('./ca');
 const { inspectBody } = require('./inspect');
 
