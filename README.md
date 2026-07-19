@@ -116,6 +116,39 @@ node /path/to/agentwatch/bin/agentwatch -- claude
 
 Use the task normally; when the agent exits, the report prints in your terminal.
 
+## Seeing all your runs in a UI: the dashboard
+
+Every run is saved, so you can browse your whole history in a local web UI:
+
+```bash
+agentwatch dashboard
+```
+
+This opens `http://127.0.0.1:7777` in your browser — a read-only dashboard listing
+every run grouped by day, with per-run badges (ignore violations, secrets, git
+history, files whose content left), vendor labels (Anthropic/Claude, OpenAI, …),
+and a click-through detail view. It only *reads* the session files agentwatch
+already wrote; it never captures traffic or runs agents, and it binds to
+localhost only.
+
+## Stop retyping the prefix: watch mode
+
+```bash
+agentwatch watch
+```
+
+This drops you into a shell where common agent CLIs (`claude`, `codex`, `grok`,
+`cursor-agent`, `gemini`, `aider`) are **auto-wrapped** — just run `claude` and it
+is transparently captured, no prefix needed. Type `exit` to leave. Each run flows
+into the dashboard.
+
+This is still **opt-in per agent** (only the agents you launch in that shell are
+seen) and uses **no system-wide certificate** — it is not a background monitor of
+your whole machine. That is a deliberate safety choice: agentwatch can only ever
+see the agents you point it at. (A true always-on, system-wide monitor would
+require trusting the certificate system-wide, which would let it read *all* your
+encrypted traffic — a trade-off this tool does not make.)
+
 ## Install
 
 Requires Node.js ≥ 18.

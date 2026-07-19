@@ -18,6 +18,8 @@ USAGE
   agentwatch diff <a.json> <b.json>  Diff two sessions (categories first)
   agentwatch compare <A=glob> <B=glob>
                                      Compare N runs per condition (privacy toggle)
+  agentwatch dashboard [--port N]    Open a local UI over all saved runs
+  agentwatch watch                   Shell where agents are auto-wrapped (no prefix)
   agentwatch ca --path|--print|--install|--uninstall
                                      Manage the local CA (per-process by default)
   agentwatch version
@@ -43,6 +45,8 @@ async function main(argv) {
     case 'report': return cmdReport(args[1]);
     case 'diff': return cmdDiff(args[1], args[2]);
     case 'compare': return cmdCompare(args.slice(1));
+    case 'dashboard': return cmdDashboard(args.slice(1));
+    case 'watch': return cmdWatch(args.slice(1));
     case 'ca': return cmdCa(args.slice(1));
     case 'version': case '--version': console.log(VERSION); return 0;
     default:
@@ -106,6 +110,57 @@ function parseCondition(spec) {
   }
   if (files.length === 0) throw new Error(`no session files for condition "${label}" (${src})`);
   return { label, sessions: files.map(loadSession) };
+}
+
+async function cmdDashboard(flags) {
+  const portIdx = flags.indexOf('--port');
+  const port = portIdx !== -1 ? parseInt(flags[portIdx + 1], 10) || 7777 : 7777;
+  const dash = require('./dashboard/server');
+  const cwd = process.cwd();
+  const { port: actual } = await dash.start(cwd, { port });
+  const url = `http://127.0.0.1:${actual}`;
+  const n = dash.listSessions(cwd).length;
+  console.error(`[agentwatch] dashboard: ${url}  (${n} session${n === 1 ? '' : 's'} in ${path.relative(cwd, path.join(cwd, '.agentwatch', 'sessions')) || '.agentwatch/sessions'})`);
+  console.error('[agentwatch] read-only; press Ctrl+C to stop.');
+  openBrowser(url);
+  return new Promise(() => {}); // keep serving until Ctrl+C
+}
+
+function openBrowser(url) {
+  try {
+    const { spawn } = require('child_process');
+    const cmd = process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]]
+      : process.platform === 'darwin' ? ['open', [url]]
+      : ['xdg-open', [url]];
+    spawn(cmd[0], cmd[1], { stdio: 'ignore', detached: true }).on('error', () => {}).unref();
+  } catch { /* best-effort */ }
+}
+
+// Agent CLI names auto-wrapped inside `agentwatch watch`.
+const WATCH_AGENTS = ['claude', 'codex', 'grok', 'cursor-agent', 'gemini', 'aider'];
+
+function cmdWatch() {
+  const { spawn } = require('child_process');
+  const bin = path.resolve(__dirname, '..', 'bin', 'agentwatch');
+  console.error('[agentwatch] watch mode: launching a shell where these agents are auto-wrapped:');
+  console.error('   ' + WATCH_AGENTS.join(', '));
+  console.error('[agentwatch] run an agent normally (e.g. `claude`) — no prefix needed. `exit` to leave.\n');
+
+  if (process.platform === 'win32') {
+    const defs = WATCH_AGENTS.map((a) =>
+      `function ${a} { & node "${bin}" -- ${a} @args }`).join('; ');
+    const banner = `Write-Host '[agentwatch] watch active — agents are wrapped. Type exit to leave.' -ForegroundColor Cyan`;
+    const child = spawn('powershell', ['-NoExit', '-NoLogo', '-Command', `${defs}; ${banner}`], { stdio: 'inherit' });
+    return new Promise((res) => child.on('exit', (c) => res(c || 0)));
+  }
+  // posix: define shell functions via a temp rcfile, then start an interactive shell.
+  const os = require('os');
+  const rc = path.join(os.tmpdir(), `agentwatch-watch-${process.pid}.sh`);
+  const defs = WATCH_AGENTS.map((a) => `${a}(){ node "${bin}" -- ${a} "$@"; }`).join('\n');
+  fs.writeFileSync(rc, `[ -f ~/.bashrc ] && . ~/.bashrc\n${defs}\nexport PS1="(agentwatch) $PS1"\necho "[agentwatch] watch active — agents are wrapped. Type exit to leave."\n`);
+  const shell = process.env.SHELL || 'bash';
+  const child = spawn(shell, ['--rcfile', rc, '-i'], { stdio: 'inherit' });
+  return new Promise((res) => child.on('exit', (c) => { try { fs.unlinkSync(rc); } catch {} res(c || 0); }));
 }
 
 function cmdCa(flags) {
