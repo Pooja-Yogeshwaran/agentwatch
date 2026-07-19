@@ -1,5 +1,7 @@
 # agentwatch
 
+[![CI](https://github.com/Pooja-Yogeshwaran/agentwatch/actions/workflows/ci.yml/badge.svg)](https://github.com/Pooja-Yogeshwaran/agentwatch/actions/workflows/ci.yml)
+
 **A transparency instrument for AI coding agents.** You prefix whatever agent
 you run, and agentwatch captures and inspects what leaves your machine — then
 answers *file-level* questions, not byte-count questions:
