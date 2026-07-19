@@ -52,17 +52,69 @@ words like "exfiltration," "threat," or "breach" in its output, by design.
 
 ## Try it in 30 seconds (no agent or credentials needed)
 
-```
+agentwatch is a **command-line tool** — you run it in a **terminal on your own
+computer** (Command Prompt, PowerShell, or Git Bash on Windows; Terminal on
+macOS/Linux). It is not a website; the result prints as text in the terminal
+right after you run it.
+
+Open a terminal and run these one at a time:
+
+```bash
 git clone https://github.com/Pooja-Yogeshwaran/agentwatch.git
-cd agentwatch && npm install
+cd agentwatch
+npm install
 npm run demo
 ```
 
-The demo runs a stand-in agent that reads a `.gitignore`'d `.env`, sends file
-contents to a local stand-in "model" endpoint, and uploads a fake git packfile —
-entirely on localhost. agentwatch reports the ignore-rule violation, the secrets,
-the git-history egress, and the read-vs-send divergence. Nothing leaves your
-machine and no real credentials are involved.
+`npm run demo` runs a stand-in agent that reads a `.gitignore`'d `.env`, sends the
+file contents to a local stand-in "model" endpoint, and uploads a fake git
+packfile — entirely on localhost, with no real agent, network, or credentials.
+**agentwatch prints this report to your terminal** ([full copy here](examples/sample-report.txt)):
+
+```text
+SUMMARY
+------------------------------------------------------------
+  traffic intercepted        : yes
+  files whose CONTENT left   : 2
+  ignore-rule violations     : 1
+  secrets on egress          : 2
+  git history left machine   : yes
+  read-vs-send               : 2 file(s) sent but not reported as read
+
+[1] IGNORE-FILE VERIFIER  (1 ignored file(s) tracked)
+------------------------------------------------------------
+  ✗ .env  — content appeared in traffic (100%, high)
+      declared in .gitignore; first at turn 0 → 127.0.0.1
+
+[3] GIT HISTORY / PACKFILE  (1)
+------------------------------------------------------------
+  ✗ packfile v2, 317 objects → 127.0.0.1 (turn 2)
+
+[4] READ-VS-SEND DIVERGENCE
+------------------------------------------------------------
+  agent reported reading 1 file(s); content of 2 file(s) was observed leaving.
+  ✗ sent but NOT reported as read (2):
+      .env
+      util.js
+```
+
+The report is also saved as JSON under `.agentwatch/sessions/`, and you can
+re-display it anytime with `node bin/agentwatch report`.
+
+### Running it against a *real* agent
+
+Once the demo makes sense, point it at an actual agent on one of your own
+projects. From inside that project's folder, in a terminal:
+
+```bash
+# if you installed globally with `npm install -g .`
+agentwatch -- claude
+
+# or without installing, using the full path to bin/agentwatch:
+node /path/to/agentwatch/bin/agentwatch -- claude
+```
+
+Use the task normally; when the agent exits, the report prints in your terminal.
 
 ## Install
 

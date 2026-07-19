@@ -1,0 +1,55 @@
+agentwatch session report
+============================================================
+command      : node examples/mock-agent.js
+agent        : unknown
+when         : 2026-07-19T18:06:28.956Z
+tool/os      : agentwatch 0.1.0 on win32, node v22.14.0
+exit code    : 0
+
+WHAT THIS DOES NOT PROVE
+------------------------------------------------------------
+  Interception is cooperative: an agent that opens raw sockets, pins
+  certificates, or ignores HTTPS_PROXY can bypass this tool. "No match"
+  means "not observed", never "did not leave". Prompt caching can hide
+  re-sent content in later turns.
+
+SUMMARY
+------------------------------------------------------------
+  traffic intercepted        : yes
+  files whose CONTENT left   : 2
+  ignore-rule violations     : 1
+  secrets on egress          : 2
+  git history left machine   : yes
+  read-vs-send               : 2 file(s) sent but not reported as read
+
+[1] IGNORE-FILE VERIFIER  (1 ignored file(s) tracked)
+------------------------------------------------------------
+  ✗ .env  — content appeared in traffic (100%, high)
+      declared in .gitignore; first at turn 0 → 127.0.0.1
+
+[2] SECRETS ON EGRESS  (2)
+------------------------------------------------------------
+  ✗ generic-secret-assignment-unquoted (pattern)  fp:c07fb7da512f  ×2
+      first at turn 0 → 127.0.0.1  [source: .env]
+  ✗ generic-secret-assignment-unquoted (pattern)  fp:a5ac9f225dbf  ×2
+      first at turn 0 → 127.0.0.1  [source: .env]
+  (values are never stored or displayed — type, location, and fingerprint only)
+
+[3] GIT HISTORY / PACKFILE  (1)
+------------------------------------------------------------
+  ✗ packfile v2, 317 objects → 127.0.0.1 (turn 2)
+
+[4] READ-VS-SEND DIVERGENCE
+------------------------------------------------------------
+  agent (generic) reported reading 1 file(s);
+  content of 2 file(s) was observed leaving.
+  ✗ sent but NOT reported as read (2):
+      .env
+      util.js
+  · reported read but content not observed (often caching): 1
+
+DESTINATIONS (transport-level, supporting context only)
+------------------------------------------------------------
+  127.0.0.1                                 3 req      639 B
+
+Findings are observations, not allegations. Report issues to the vendor
