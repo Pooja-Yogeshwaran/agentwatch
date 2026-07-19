@@ -113,6 +113,15 @@ agentwatch diff a.json b.json  # compare two runs
 **dashboard**. Both are local to your machine — there is no website, on purpose,
 because the results are sensitive.
 
+### Prefer not to use a terminal?
+
+- **Double-click `agentwatch-dashboard.cmd`** (Windows) or `agentwatch-dashboard.sh`
+  (macOS/Linux) in the project folder — it opens the dashboard in your browser with
+  no typing. The dashboard shows **every run across all your projects** (runs are
+  saved to a global store, not just the current folder).
+- **In your editor:** there's an early [VS Code / Cursor extension](extension/) that
+  runs agentwatch and shows reports in a panel — see `extension/README.md`.
+
 ## How it works
 
 agentwatch reads your agent's encrypted (HTTPS) traffic using the same,

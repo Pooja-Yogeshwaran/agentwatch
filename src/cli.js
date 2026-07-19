@@ -116,11 +116,12 @@ async function cmdDashboard(flags) {
   const portIdx = flags.indexOf('--port');
   const port = portIdx !== -1 ? parseInt(flags[portIdx + 1], 10) || 7777 : 7777;
   const dash = require('./dashboard/server');
-  const cwd = process.cwd();
-  const { port: actual } = await dash.start(cwd, { port });
+  // Default: global store (all projects). `--here` limits to the current folder.
+  const scope = flags.includes('--here') ? process.cwd() : null;
+  const { port: actual } = await dash.start(scope, { port });
   const url = `http://127.0.0.1:${actual}`;
-  const n = dash.listSessions(cwd).length;
-  console.error(`[agentwatch] dashboard: ${url}  (${n} session${n === 1 ? '' : 's'} in ${path.relative(cwd, path.join(cwd, '.agentwatch', 'sessions')) || '.agentwatch/sessions'})`);
+  const n = dash.listSessions(scope).length;
+  console.error(`[agentwatch] dashboard: ${url}  (${n} run${n === 1 ? '' : 's'}${scope ? ' in this folder' : ' across all projects'})`);
   console.error('[agentwatch] read-only; press Ctrl+C to stop.');
   openBrowser(url);
   return new Promise(() => {}); // keep serving until Ctrl+C

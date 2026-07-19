@@ -184,11 +184,22 @@ function sessionsDir(cwd) {
   return dir;
 }
 
+// Global store so the dashboard can show every run across all projects, not just
+// the folder you happen to be in.
+function globalSessionsDir() {
+  const dir = path.join(os.homedir(), '.agentwatch', 'sessions');
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
 function save(session, cwd) {
-  const dir = sessionsDir(cwd);
   const stamp = session.timing.startedAt.replace(/[:.]/g, '-');
-  const file = path.join(dir, `session-${stamp}.json`);
-  fs.writeFileSync(file, JSON.stringify(session, null, 2));
+  const name = `session-${stamp}.json`;
+  const body = JSON.stringify(session, null, 2);
+  const file = path.join(sessionsDir(cwd), name);
+  fs.writeFileSync(file, body);
+  // also mirror into the global store (best-effort) for the dashboard
+  try { fs.writeFileSync(path.join(globalSessionsDir(), name), body); } catch { /* non-fatal */ }
   return file;
 }
 
@@ -198,4 +209,4 @@ function latest(cwd) {
   return files.length ? path.join(dir, files[files.length - 1]) : null;
 }
 
-module.exports = { build, save, latest, sessionsDir, transport };
+module.exports = { build, save, latest, sessionsDir, globalSessionsDir, transport };

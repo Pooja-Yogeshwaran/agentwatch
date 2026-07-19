@@ -1,0 +1,29 @@
+{
+  "name": "agentwatch-vscode",
+  "displayName": "agentwatch",
+  "description": "See what your AI coding agents send off your machine — from inside VS Code / Cursor.",
+  "version": "0.1.0",
+  "publisher": "agentwatch",
+  "license": "MIT",
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Other"],
+  "activationEvents": [],
+  "main": "./extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "agentwatch.runInTerminal", "title": "agentwatch: Run an agent under watch" },
+      { "command": "agentwatch.dashboard", "title": "agentwatch: Open dashboard" },
+      { "command": "agentwatch.showLastReport", "title": "agentwatch: Show last report" }
+    ],
+    "configuration": {
+      "title": "agentwatch",
+      "properties": {
+        "agentwatch.command": {
+          "type": "string",
+          "default": "agentwatch",
+          "description": "How to invoke agentwatch (e.g. 'agentwatch' if installed globally, or 'node /path/to/agentwatch/bin/agentwatch')."
+        }
+      }
+    }
+  }
+}

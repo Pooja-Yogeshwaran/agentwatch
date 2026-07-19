@@ -5,10 +5,16 @@
 // renders the session files agentwatch already wrote.
 const http = require('http');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { page } = require('./page');
 
-function sessionsDir(cwd) { return path.join(cwd, '.agentwatch', 'sessions'); }
+// Dashboard reads the GLOBAL store by default so it shows every run across all
+// projects. Falls back to a project-local store if one is passed.
+function sessionsDir(cwd) {
+  if (cwd) return path.join(cwd, '.agentwatch', 'sessions');
+  return path.join(os.homedir(), '.agentwatch', 'sessions');
+}
 
 function listSessions(cwd) {
   const dir = sessionsDir(cwd);
