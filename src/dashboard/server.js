@@ -38,6 +38,7 @@ function summarize(file, s) {
     file,
     startedAt: s.timing && s.timing.startedAt,
     day: (s.timing && s.timing.startedAt || '').slice(0, 10),
+    project: (s.project && s.project.name) || '',
     agent: (s.agent && s.agent.name) || 'unknown',
     command: Array.isArray(s.agent && s.agent.command) ? s.agent.command.join(' ') : (s.agent && s.agent.command),
     vendors: [...new Set(dests.map((d) => d.service).filter(Boolean))],

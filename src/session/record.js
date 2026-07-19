@@ -130,6 +130,10 @@ function build(capture, cwd, opts = {}) {
   const session = {
     schemaVersion: SCHEMA_VERSION,
     tool: toolMeta(),
+    // Which project this run happened in — so the dashboard can tell apart
+    // concurrent runs across different folders. Each `agentwatch -- …` is its own
+    // isolated process + proxy + session, so runs never cross-contaminate.
+    project: { path: cwd, name: path.basename(cwd) },
     agent: { command: capture.command, name: agentName || null },
     env: { os: capture.env.os, node: capture.env.nodeVersion, hostname: capture.env.hostname,
            decode: capture.capabilities },

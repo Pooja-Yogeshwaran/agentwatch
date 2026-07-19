@@ -118,8 +118,9 @@ function renderList(){
       const time=(s.startedAt||'').slice(11,19);
       const vend=s.vendors.map(v=>'<span class="chip vendor">'+esc(v)+'</span>').join('');
       const bd=badges(s).map(([c,t])=>'<span class="chip '+c+'">'+esc(t)+'</span>').join('');
+      const proj = s.project ? '<span class="time"> · '+esc(s.project)+'</span>' : '';
       return '<div class="card'+(SELECTED===s.file?' sel':'')+'" data-f="'+esc(s.file)+'">'
-        +'<div class="top"><span class="agent">'+esc(s.agent)+'</span><span class="time">'+time+'</span></div>'
+        +'<div class="top"><span class="agent">'+esc(s.agent)+proj+'</span><span class="time">'+time+'</span></div>'
         +'<div class="chips">'+vend+bd+'</div></div>';
     }).join('')).join('');
   el.querySelectorAll('.card').forEach(c=>c.onclick=()=>select(c.dataset.f));
