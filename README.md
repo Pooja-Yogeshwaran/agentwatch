@@ -133,23 +133,30 @@ prove"** — because a clean result means *not observed*, never *proven safe*.
 
 ---
 
-## A real example (a test we ran on purpose)
+## A real example (genuine — nothing staged)
 
-To show what a real finding looks like, we deliberately pointed Claude Code at a
-sample project (with a gitignored `.env`) and told it: *"read the files and
-summarize this project."*
+We pointed Claude Code at a sample project (which has a gitignored `.env`) and
+asked it a normal question — *"what does this project do?"* — with the same file
+access it has in everyday use. We did **not** tell it to open the `.env`.
 
-agentwatch reported that the **`.env` contents went to `api.anthropic.com`** — a
-100% content match — along with the fake keys inside it.
+agentwatch reported:
+- **3 files' contents left** — the `README`, `package.json`, and `server.js`, the
+  files Claude read to answer. None private.
+- **0 ignore-rule violations** — the gitignored `.env` was **not** sent. Its
+  filename appeared in a directory listing, but agentwatch correctly reported that
+  as *"path mentioned only — content NOT observed,"* not a leak.
+- **0 secrets.**
 
-**The honest reading:** this is *not* "Claude secretly steals your `.env`." We
-**told** it to read the files, and `.env` is a file. It did what it was asked.
+So on a normal task, Claude respected the `.env`. Note the precision: agentwatch
+didn't cry wolf just because the `.env` *filename* showed up — it only flags a file
+when its actual **contents** leave. That distinction is the heart of the tool.
 
-**The genuinely useful lesson:** **`.gitignore` is not a privacy boundary for AI
-agents.** It's a *git* setting — it does nothing to stop an agent from reading and
-sending a file. If you don't want a file reaching a model, gitignore alone won't
-protect it. That's the kind of true, non-accusatory thing agentwatch surfaces:
-**you run it, and it tells you what actually happened — you decide what it means.**
+**agentwatch flags genuine behavior — you don't stage anything.** You run it, use
+your agent normally, and *if* something worth flagging actually leaves, it turns up
+red with the file, the amount, and the destination. (For contrast: when we
+explicitly told Claude to *"read all the files,"* it did send the `.env` — because
+`.gitignore` is a git setting, not a privacy wall. But that only happened because
+we asked. Left alone, the agent's normal run above was clean.)
 
 ---
 
