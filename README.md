@@ -149,9 +149,39 @@ see the agents you point it at. (A true always-on, system-wide monitor would
 require trusting the certificate system-wide, which would let it read *all* your
 encrypted traffic — a trade-off this tool does not make.)
 
+## FAQ (please read — it answers the common confusion)
+
+**Does agentwatch record everything I do on my computer?**
+No. It only sees an agent run you **explicitly** wrap (`agentwatch -- <agent>`) or
+launch inside `agentwatch watch`. It is *not* a background monitor — your browser,
+other apps, and any command you didn't wrap are never captured. If your dashboard
+is empty or only shows demo runs, that's why: nothing else was routed through it.
+
+**Where do the results show up?**
+Two places, both on your own machine: (1) printed in your **terminal** right after
+each run, and (2) the **dashboard** (`agentwatch dashboard`) at
+`http://127.0.0.1:7777`. There is no public website — the results are sensitive, so
+it's local-only on purpose.
+
+**Is `127.0.0.1:7777` correct? Can other people open it?**
+Yes, that's correct — `127.0.0.1` means *your own computer* (localhost), and no one
+else can open it. Local-only is deliberate.
+
+**How do I see my results every day?**
+Work inside `agentwatch watch` (agents are captured automatically), then run
+`agentwatch dashboard` whenever you like — it lists every run grouped by day. Only
+runs you routed through agentwatch appear.
+
+**Why does a run say "unknown" or "nothing flagged"?**
+You wrapped the demo or a non-agent command. Wrap a real agent (e.g.
+`agentwatch -- codex` or `agentwatch -- claude`) to see its name, its vendor
+(OpenAI / Anthropic / …), and real findings.
+
 ## Install
 
-Requires Node.js ≥ 18.
+**Prerequisites:** install [Node.js](https://nodejs.org) (v18+) and
+[Git](https://git-scm.com) first — they provide the `node`, `npm`, and `git`
+commands used below.
 
 ```
 npm install -g agentwatch
