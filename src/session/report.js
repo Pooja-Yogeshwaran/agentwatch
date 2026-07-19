@@ -46,6 +46,21 @@ function render(session) {
         : 'unable to verify'}`);
   p('');
 
+  // ---- which files' content actually left (so you can double-check) ----
+  const left = session.findings.contentLeft || [];
+  p(`FILES WHOSE CONTENT LEFT  (${left.length})`);
+  p('-'.repeat(60));
+  if (left.length === 0) {
+    p('  No local file content was observed leaving.');
+  } else {
+    for (const c of left) {
+      p(`  • ${c.path}  (${c.coveragePct}% matched, ${c.confidence}) → ${c.destinations.join(', ')}`);
+    }
+    p('  (matched by content — the file\'s bytes were found in outbound traffic,');
+    p('   not just its name. Open each file to verify what was sent.)');
+  }
+  p('');
+
   // ---- #1 ignore ----
   const ig = session.findings.ignore;
   p(`[1] IGNORE-FILE VERIFIER  (${ig.ignoredFileCount} ignored file(s) tracked)`);

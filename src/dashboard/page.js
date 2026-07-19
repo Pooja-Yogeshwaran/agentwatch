@@ -140,6 +140,12 @@ function renderDetail(s){
     h+='<h2>Unable to verify ('+s.unverifiable.length+') — not clean results</h2>';
     h+=dedupe(s.unverifiable).map(u=>'<div class="finding warn"><span class="k">['+esc(u.check)+']</span> '+esc(u.reason)+'</div>').join('');
   }
+  // files whose content left (so users can double-check exactly what)
+  const left=f.contentLeft||[];
+  h+='<h2>Files whose content left ('+left.length+')</h2>';
+  if(!left.length) h+='<div class="finding ok">No local file content observed leaving.</div>';
+  else{ left.forEach(c=>h+='<div class="finding'+(c.coveragePct>=60?'':' warn')+'"><b>'+esc(c.path)+'</b> <span class="k">'+c.coveragePct+'% matched, '+esc(c.confidence)+' → '+esc((c.destinations||[]).join(', '))+'</span></div>');
+    h+='<div class="meta">Matched by content (the file\\'s bytes were found in traffic, not just its name). Open each file to verify.</div>'; }
   // ignore
   const ig=f.ignore||{violations:[],pathOnly:[]};
   h+='<h2>Ignore-file violations</h2>';
