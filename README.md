@@ -2,62 +2,53 @@
 
 [![CI](https://github.com/Pooja-Yogeshwaran/agentwatch/actions/workflows/ci.yml/badge.svg)](https://github.com/Pooja-Yogeshwaran/agentwatch/actions/workflows/ci.yml)
 
-**A transparency instrument for AI coding agents.** You prefix whatever agent
-you run, and agentwatch captures and inspects what leaves your machine — then
-answers *file-level* questions, not byte-count questions:
+**See exactly what your AI coding agent sends off your machine.**
 
-- Did the contents of a `.gitignore`'d file leave?
-- Did credentials leave inside the traffic?
-- Did your full Git history leave, not just current files?
-- The agent said it read 3 files — did the contents of 3 files leave, or 400?
+agentwatch is a tool you put in front of any AI coding assistant — Claude Code,
+Cursor, Codex, Grok, and others. It watches what that assistant transmits and
+hands you a plain‑English report: which of your files left, whether it touched
+files you marked private, whether any passwords or keys went out, and whether it
+quietly sent more than it told you.
 
-```
+```bash
 agentwatch -- claude
-agentwatch report
-agentwatch diff <session-a> <session-b>
 ```
 
 ---
 
-## Read this first: what agentwatch does NOT prove
+## The problem, in plain terms
 
-**Interception is cooperative.** agentwatch works by setting `HTTPS_PROXY` and
-injecting a certificate authority into the process you wrap. An agent that wants
-to avoid this can: open raw sockets, use DNS-over-HTTPS, pin certificates,
-hardcode a bypass, or simply use an HTTP client that ignores proxy environment
-variables. **agentwatch only sees traffic the agent cooperatively routes through
-it.** During development we found that even a *cooperative* runtime (bare Node.js)
-does not honor `HTTPS_PROXY` unless the program opts in — so "nothing captured" is
-never reported as "clean."
+AI coding assistants work by reading files from your project and sending them to a
+company's servers to get an answer. That's normal — it's how they function.
 
-Consequences, stated plainly:
+The catch is that **you're trusting a promise you can't check.** Most tools say
+something reassuring: *"we only send what's needed," "your code stays private,"
+"nothing sensitive leaves your machine."* You have no way to confirm any of it.
 
-- **"No match" means "not observed" — never "did not leave."** Content matching
-  can be defeated by chunking, truncation, or transformation. A clean result is
-  the *absence of evidence*, not evidence of absence.
-- **If a check cannot run, the report says "unable to verify," never "clean."**
-  Undecodable payloads, unrecognized agent output, cert pinning, or bypassed
-  traffic all produce explicit "unable to verify" entries. This is the single
-  most important correctness property of the tool.
-- **Sending your code is normal.** It is how these agents function. Observing it
-  is not an allegation. agentwatch produces *evidence*, not verdicts.
-- **Prompt caching distorts volume.** A cached prefix may cross the wire once and
-  never again, so byte counts undercount exposure and later "absence" is not
-  proof content didn't leave earlier.
+And the promise isn't always kept. In 2026, a close analysis of one "local‑first"
+coding assistant found it quietly uploading **entire tracked projects — full git
+history included** — regardless of which files it actually used, and even with the
+privacy setting turned off. A tracked `.env` file full of real API keys went out
+in the clear.
 
-agentwatch is a **transparency instrument, not a security tool.** There are no
-words like "exfiltration," "threat," or "breach" in its output, by design.
+Normally, catching something like that takes a security researcher with
+specialized tools and hours of manual work. **agentwatch turns it into one
+command that anyone can run.**
 
----
+## What it tells you
 
-## Try it in 30 seconds (no agent or credentials needed)
+For a single run of an agent, agentwatch answers four questions in plain language:
 
-agentwatch is a **command-line tool** — you run it in a **terminal on your own
-computer** (Command Prompt, PowerShell, or Git Bash on Windows; Terminal on
-macOS/Linux). It is not a website; the result prints as text in the terminal
-right after you run it.
+1. **Did a file I marked private leave?** (e.g. anything in `.gitignore`,
+   `.cursorignore`, …)
+2. **Did any passwords or API keys leave?**
+3. **Did my entire git *history* leave**, not just the current files?
+4. **The agent said it read 3 files — did 3 files' contents leave, or 400?**
 
-Open a terminal and run these one at a time:
+## See it in 30 seconds (no agent or credentials needed)
+
+agentwatch is a command‑line tool — you run it in a **terminal on your own
+computer**, and the report prints right there. Try the built‑in demo:
 
 ```bash
 git clone https://github.com/Pooja-Yogeshwaran/agentwatch.git
@@ -66,258 +57,148 @@ npm install
 npm run demo
 ```
 
-`npm run demo` runs a stand-in agent that reads a `.gitignore`'d `.env`, sends the
-file contents to a local stand-in "model" endpoint, and uploads a fake git
-packfile — entirely on localhost, with no real agent, network, or credentials.
-**agentwatch prints this report to your terminal** ([full copy here](examples/sample-report.txt)):
+The demo runs a stand‑in agent that reads a private `.env`, sends its contents to a
+local endpoint, and uploads a fake git history bundle — all on your own machine.
+agentwatch catches every bit of it and prints ([full report](examples/sample-report.txt)):
 
 ```text
 SUMMARY
-------------------------------------------------------------
-  traffic intercepted        : yes
   files whose CONTENT left   : 2
   ignore-rule violations     : 1
   secrets on egress          : 2
   git history left machine   : yes
   read-vs-send               : 2 file(s) sent but not reported as read
 
-[1] IGNORE-FILE VERIFIER  (1 ignored file(s) tracked)
-------------------------------------------------------------
+[1] IGNORE-FILE VERIFIER
   ✗ .env  — content appeared in traffic (100%, high)
-      declared in .gitignore; first at turn 0 → 127.0.0.1
-
-[3] GIT HISTORY / PACKFILE  (1)
-------------------------------------------------------------
-  ✗ packfile v2, 317 objects → 127.0.0.1 (turn 2)
+      declared in .gitignore; first at turn 0
 
 [4] READ-VS-SEND DIVERGENCE
-------------------------------------------------------------
   agent reported reading 1 file(s); content of 2 file(s) was observed leaving.
-  ✗ sent but NOT reported as read (2):
-      .env
-      util.js
+  ✗ sent but NOT reported as read: .env, util.js
 ```
-
-The report is also saved as JSON under `.agentwatch/sessions/`, and you can
-re-display it anytime with `node bin/agentwatch report`.
-
-### Running it against a *real* agent
-
-Once the demo makes sense, point it at an actual agent on one of your own
-projects. From inside that project's folder, in a terminal:
-
-```bash
-# if you installed globally with `npm install -g .`
-agentwatch -- claude
-
-# or without installing, using the full path to bin/agentwatch:
-node /path/to/agentwatch/bin/agentwatch -- claude
-```
-
-Use the task normally; when the agent exits, the report prints in your terminal.
-
-## Seeing all your runs in a UI: the dashboard
-
-Every run is saved, so you can browse your whole history in a local web UI:
-
-```bash
-agentwatch dashboard
-```
-
-This opens `http://127.0.0.1:7777` in your browser — a read-only dashboard listing
-every run grouped by day, with per-run badges (ignore violations, secrets, git
-history, files whose content left), vendor labels (Anthropic/Claude, OpenAI, …),
-and a click-through detail view. It only *reads* the session files agentwatch
-already wrote; it never captures traffic or runs agents, and it binds to
-localhost only.
-
-## Stop retyping the prefix: watch mode
-
-```bash
-agentwatch watch
-```
-
-This drops you into a shell where common agent CLIs (`claude`, `codex`, `grok`,
-`cursor-agent`, `gemini`, `aider`) are **auto-wrapped** — just run `claude` and it
-is transparently captured, no prefix needed. Type `exit` to leave. Each run flows
-into the dashboard.
-
-This is still **opt-in per agent** (only the agents you launch in that shell are
-seen) and uses **no system-wide certificate** — it is not a background monitor of
-your whole machine. That is a deliberate safety choice: agentwatch can only ever
-see the agents you point it at. (A true always-on, system-wide monitor would
-require trusting the certificate system-wide, which would let it read *all* your
-encrypted traffic — a trade-off this tool does not make.)
-
-## FAQ (please read — it answers the common confusion)
-
-**Does agentwatch record everything I do on my computer?**
-No. It only sees an agent run you **explicitly** wrap (`agentwatch -- <agent>`) or
-launch inside `agentwatch watch`. It is *not* a background monitor — your browser,
-other apps, and any command you didn't wrap are never captured. If your dashboard
-is empty or only shows demo runs, that's why: nothing else was routed through it.
-
-**Where do the results show up?**
-Two places, both on your own machine: (1) printed in your **terminal** right after
-each run, and (2) the **dashboard** (`agentwatch dashboard`) at
-`http://127.0.0.1:7777`. There is no public website — the results are sensitive, so
-it's local-only on purpose.
-
-**Is `127.0.0.1:7777` correct? Can other people open it?**
-Yes, that's correct — `127.0.0.1` means *your own computer* (localhost), and no one
-else can open it. Local-only is deliberate.
-
-**How do I see my results every day?**
-Work inside `agentwatch watch` (agents are captured automatically), then run
-`agentwatch dashboard` whenever you like — it lists every run grouped by day. Only
-runs you routed through agentwatch appear.
-
-**Why does a run say "unknown" or "nothing flagged"?**
-You wrapped the demo or a non-agent command. Wrap a real agent (e.g.
-`agentwatch -- codex` or `agentwatch -- claude`) to see its name, its vendor
-(OpenAI / Anthropic / …), and real findings.
 
 ## Install
 
 **Prerequisites:** install [Node.js](https://nodejs.org) (v18+) and
-[Git](https://git-scm.com) first — they provide the `node`, `npm`, and `git`
-commands used below.
+[Git](https://git-scm.com) — they provide the `node`, `npm`, and `git` commands.
 
-```
-npm install -g agentwatch
-# or run without installing:
-npx agentwatch -- <your-agent>
+```bash
+npm install -g agentwatch      # then: agentwatch -- <your-agent>
+# or run it straight from a clone, as in the demo above
 ```
 
-Everything (including TLS capture) runs in Node via
-[mockttp](https://github.com/httptoolkit/mockttp) — there is no Python or
-mitmproxy dependency, which keeps install to a single command on Windows, macOS,
-and Linux.
+Everything runs in Node — no Python or extra services to set up.
 
-## Usage
+## Using it
 
-```
-agentwatch -- <command...>          Wrap and inspect an agent's egress
-agentwatch report [session.json]    Render the latest (or a given) session
-agentwatch diff <a.json> <b.json>   Diff two sessions (fact-categories first)
-agentwatch compare on=<paths> off=<paths>
-                                    Compare N runs per condition (privacy toggle)
-agentwatch ca [--path|--print|--install|--uninstall]
-                                    Manage the local CA (per-process by default)
+```bash
+agentwatch -- <command>        # wrap a real agent, e.g. agentwatch -- claude
+agentwatch dashboard           # browse all your past runs in a local web UI
+agentwatch watch               # a shell where agents are auto-wrapped (no prefix)
+agentwatch report              # re-print the latest run's report
+agentwatch diff a.json b.json  # compare two runs
 ```
 
-Sessions are written to `./.agentwatch/sessions/`.
+- **`agentwatch -- claude`** — run your agent as usual; when it finishes, the
+  report prints in your terminal. Each run is also saved under
+  `./.agentwatch/sessions/`.
+- **`agentwatch dashboard`** — opens `http://127.0.0.1:7777` in your browser: every
+  run grouped by day, with badges (secrets, ignored files, git history) and vendor
+  labels (Anthropic / OpenAI / …). It's on your own machine only.
+- **`agentwatch watch`** — drops you into a shell where `claude`, `codex`, `grok`,
+  etc. are captured automatically, so you don't retype the prefix.
 
-## The trust story (why you probably don't need to install a certificate)
+**Where do results show up?** In your **terminal** after each run, and in the
+**dashboard**. Both are local to your machine — there is no website, on purpose,
+because the results are sensitive.
 
-To read TLS traffic, agentwatch presents its own certificate to the wrapped
-process. The **default and preferred** path injects that certificate into **only
-the wrapped process**, via environment variables it already controls:
-`NODE_EXTRA_CA_CERTS` (Node), `SSL_CERT_FILE` / `REQUESTS_CA_BUNDLE` (Python, Go,
-curl), `GIT_SSL_CAINFO` (git). **No system trust store is touched, and the trust
-dies with the process.** We verified this is sufficient for Node-based agents on
-Windows.
+## How it works
 
-If an agent's runtime ignores those variables, `agentwatch ca` prints an
-explicit, reversible, one-command system-store install (and its removal). It is
-never automatic.
+agentwatch reads your agent's encrypted (HTTPS) traffic using the same,
+well‑established technique as tools like Charles Proxy, Fiddler, and mitmproxy:
 
-## The four detections
+1. It generates a local certificate and tells **only the wrapped agent** to route
+   its traffic through agentwatch and trust that certificate.
+2. That lets agentwatch decrypt a copy of the traffic, inspect it, and forward it
+   **unchanged** to the real server.
+3. It then **fingerprints your local files** and matches them against the
+   decrypted traffic — so "your `.env` left" means its *content* was found in what
+   was sent, not just that its name was mentioned.
 
-All four sit on a shared **content-matching engine** that fingerprints your local
-files (whitespace-normalized, shingled) and matches those fingerprints against
-decrypted, decompressed, normalized payloads. Every "file X left" claim means its
-**content matched**, not that its path string appeared — those are reported as
-separate facts, because a directory listing mentions hundreds of paths whose
-contents never leave. Content that is resent every turn is **deduplicated to one
-finding with a first-seen turn.**
+It touches **only the one agent you wrap** — not your browser, not other apps, not
+the rest of your machine. Nothing it sees is sent anywhere or written to disk.
 
-1. **Ignore-file verifier** — parses `.gitignore`, `.cursorignore`, `.grokignore`,
-   `.aiignore`, etc., fingerprints the files behind those boundaries, and reports
-   a **violation** when their content is observed leaving. The strongest check:
-   you declared the boundary, so there's no judgment call.
-2. **Secret detection on egress** — gitleaks-style pattern rules plus Shannon-
-   entropy detection over outbound payloads. **Values are never stored or
-   displayed** — only the rule id, location, occurrence count, source file, and a
-   non-reversible fingerprint (for dedup). A secret resent every turn is one
-   finding, not forty.
-3. **Packfile / Git-history detector** — detects the `PACK` signature and git
-   bundle headers in egress (including inside multipart bodies and after
-   decompression / base64). A single unambiguous signal that commit *history*
-   left the machine — the larger exposure, since deleted secrets live in history.
-4. **Read-vs-send divergence** — parses the agent's self-reported file reads and
-   compares them against the files whose *content* was independently observed
-   leaving. The only check that tests whether the agent's account of itself is
-   accurate. Also the most format-fragile: unrecognized output degrades to
-   "unable to verify," never a false clean.
+## The four checks in detail
 
-## The session record
+1. **Ignore‑file verifier** — parses `.gitignore`, `.cursorignore`, `.grokignore`,
+   `.aiignore`, and reports when a file behind one of those boundaries has its
+   content observed leaving. The strongest check: you declared the boundary, so
+   there's nothing to interpret.
+2. **Secret detection** — pattern rules (gitleaks‑style) plus entropy analysis over
+   outbound traffic. **The secret value is never stored or shown** — only its type,
+   location, and a non‑reversible fingerprint.
+3. **Git‑history detector** — spots a git packfile or bundle in the traffic, which
+   means your commit *history* left, not just current files (the bigger exposure,
+   since deleted secrets live in history).
+4. **Read‑vs‑send divergence** — compares the files the agent *says* it read against
+   the files whose content actually left. The only check that tests whether the
+   agent's account of itself is accurate.
 
-Each run produces a versioned JSON record with **two-level accounting**:
+## FAQ
 
-- **Level 1 — distinct content that left** (the findings): file-level facts, each
-  deduplicated with a first-seen turn. This is where every finding lives.
-- **Level 2 — raw transport** (supporting context only): per-destination request
-  counts and byte volumes.
+**Does agentwatch record everything I do on my computer?**
+No. It only sees an agent run you **explicitly** wrap (`agentwatch -- <agent>`) or
+launch inside `agentwatch watch`. It is not a background monitor — your browser,
+other apps, and any command you didn't wrap are never captured.
 
-Records are normalized (timestamps, ports, ordering) so a `diff` shows behavioral
-differences, not format noise. Findings reference paths, types, and fingerprints —
-**never raw secret values and never file contents.** This is enforced by a
-redaction guard and covered by tests.
+**Where do the results show up?**
+In your **terminal** after each run, and in the **dashboard**
+(`agentwatch dashboard`, at `http://127.0.0.1:7777`). Both are on your own machine.
 
-## The diff engine and agent nondeterminism
+**Is `127.0.0.1` correct? Can others open it?**
+Yes — `127.0.0.1` means *your own computer* (localhost), and no one else can reach
+it. Local‑only is deliberate, since the results are sensitive.
 
-LLM agents are nondeterministic: two runs of the same task legitimately read
-different files and make different calls. So a naive per-file diff of two single
-runs attributes agent randomness to whatever you changed. agentwatch therefore:
+**How do I see my results every day?**
+Work inside `agentwatch watch`, then open `agentwatch dashboard` whenever you like —
+it lists every run grouped by day. Only runs you routed through agentwatch appear.
 
-- diffs **fact categories first** (did ignored files leave? did history leave?
-  which destinations?), with per-file deltas explicitly labeled as noise-prone;
-- supports **N runs per condition** (`compare`), reporting what is *stable across
-  runs within a condition* versus what *changed between conditions* — the honest
-  way to run the privacy-toggle experiment (same task, setting on vs. off).
+**Why does a run say "unknown" or "nothing flagged"?**
+You wrapped the demo or a non‑agent command. Wrap a real agent (e.g.
+`agentwatch -- codex`) to see its name, its vendor, and real findings.
 
-## Rules as data
+## What agentwatch does *not* prove
 
-Detection patterns, ignore-file formats, known endpoints, and agent output
-parsers are declarative YAML in [`rules/`](rules/). A new pattern next month is a
-new rule, not a code change. Drop overrides in your own rules directory.
+Being honest about the limits is part of the tool:
 
-## Known limitations
+- **It only sees cooperative traffic.** An agent that really wants to evade a proxy
+  can (raw sockets, certificate pinning, DNS‑over‑HTTPS). agentwatch observes what
+  the agent routes through it; it can't catch deliberate evasion.
+- **"No match" means "not observed," never "did not leave."** A clean result is the
+  absence of evidence, not proof of innocence.
+- **If a check can't run, it says "unable to verify" — never "clean."** An
+  unreadable payload or an unrecognized agent is reported honestly, never as a pass.
+- **Observing traffic is not an accusation.** Sending your code is how these agents
+  work. agentwatch produces *evidence*, not verdicts.
 
-1. **Voluntary compliance** — see the top of this README.
-2. **The trust story is the adoption barrier** — mitigated by per-process
-   injection, not eliminated.
-3. **No baseline for "normal" volume** — which is why the checks are file-level
-   and contract-based, not threshold-based, and why `diff`/`compare` beat
-   absolute numbers.
-4. **Payload formats vary** — gzip, brotli, deflate, multipart, and base64 are
-   handled; anything undecodable (e.g. an unsupported codec, protobuf/gRPC) is
-   reported as "could not inspect," never silently passed.
-5. **Content matching can miss** — report confidence is shown; "no match" is
-   phrased as "not observed."
-6. **Agents are nondeterministic** — addressed structurally by the diff engine.
-7. **Reports go stale** — every record prominently stamps agent and tool version.
-8. **Never a false clean** — if a detection cannot run, the report says so.
+It's a tool you reach for to **verify when you want to check** — like a testing kit,
+not a 24/7 alarm.
 
 ## Responsible use
 
-If you use agentwatch to compare named vendors:
-
-- Report findings to the vendor first, with reasonable time to respond, before
-  publication.
-- Report **observations, never intent**: "File X appeared in traffic to Y," not
-  "vendor Z harvests your code."
-- Publish limitations alongside any result.
+If you use agentwatch to test a *named* product: report findings to the vendor
+first with reasonable time to respond, report **observations, not intent** ("file X
+appeared in traffic to Y," never "vendor Z harvests your code"), and publish the
+limitations alongside any result.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT — see [LICENSE](LICENSE).
 
-## Prior art
+## Prior art & credit
 
-The capture layer builds on [mockttp](https://github.com/httptoolkit/mockttp)
-(the engine behind HTTP Toolkit), which solves per-process interception and
-certificate injection. mitmproxy solves the same capture problem in Python. The
-**analysis layer** — content matching, the four file-level detections, the
-session model, and the nondeterminism-aware diff — is agentwatch's contribution.
+The capture layer builds on [mockttp](https://github.com/httptoolkit/mockttp) (the
+engine behind HTTP Toolkit); mitmproxy solves the same capture problem in Python.
+agentwatch's contribution is the **analysis layer** — content matching, the four
+file‑level checks, the session model, and the nondeterminism‑aware diff.
