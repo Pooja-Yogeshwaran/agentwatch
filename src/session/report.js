@@ -8,7 +8,7 @@ function render(session) {
   const p = (s = '') => L.push(s);
   const S = session.summary || {};
 
-  p('agentwatch session report');
+  p('Agent Watcher — session report');
   p('='.repeat(60));
   p(`command      : ${Array.isArray(session.agent.command) ? session.agent.command.join(' ') : session.agent.command}`);
   p(`agent        : ${session.agent.name || 'unknown'}`);

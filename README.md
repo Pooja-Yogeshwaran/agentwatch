@@ -1,9 +1,11 @@
-# agentwatch
+# Agent Watcher
 
 [![CI](https://github.com/Pooja-Yogeshwaran/agentwatch/actions/workflows/ci.yml/badge.svg)](https://github.com/Pooja-Yogeshwaran/agentwatch/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **See exactly what your AI coding agent sends off your machine.**
+
+*(Run it with the `agentwatch` command.)*
 
 Modern AI coding agents — Claude Code, Cursor, Codex, and others — read files from
 your project and send them to a company's servers to do their work. That's normal;
