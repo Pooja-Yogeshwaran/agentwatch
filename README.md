@@ -16,7 +16,7 @@ agentwatch -- claude
 
 ---
 
-## The problem, in plain terms
+## The problem
 
 AI coding assistants work by reading files from your project and sending them to a
 company's servers to get an answer. That's normal — it's how they function.
