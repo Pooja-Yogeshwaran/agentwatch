@@ -30,6 +30,11 @@ agentwatch -- <your agent>      # e.g. claude, codex, aider, grok, cursor-agent
 > Replace `<your agent>` with whatever you run; the examples below just use
 > `claude` as a stand-in.
 
+> **It's a testing tool, not a background monitor.** You run Agent Watcher when you
+> want to *check* something — evaluate a new agent before trusting it, audit a
+> suspicious run, or verify a privacy claim. It watches the single run you wrap and
+> then stops. It does **not** run in the background or track everything you do.
+
 ## What it tells you
 
 For any single run of an agent:
