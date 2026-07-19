@@ -39,7 +39,9 @@ echo.stdout.once('data', () => {
   ], {
     cwd: demoRepo,
     stdio: 'inherit',
-    env: { ...process.env, DEMO_TARGET: target },
+    // AGENTWATCH_NO_GLOBAL keeps this demo run out of your real dashboard's global
+    // store — it stays only in the demo folder.
+    env: { ...process.env, DEMO_TARGET: target, AGENTWATCH_NO_GLOBAL: '1' },
   });
 
   echo.kill();

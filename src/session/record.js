@@ -201,8 +201,11 @@ function save(session, cwd) {
   const body = JSON.stringify(session, null, 2);
   const file = path.join(sessionsDir(cwd), name);
   fs.writeFileSync(file, body);
-  // also mirror into the global store (best-effort) for the dashboard
-  try { fs.writeFileSync(path.join(globalSessionsDir(), name), body); } catch { /* non-fatal */ }
+  // Mirror into the global store for the dashboard — unless suppressed. The
+  // built-in demo sets AGENTWATCH_NO_GLOBAL so it never pollutes your real dashboard.
+  if (!process.env.AGENTWATCH_NO_GLOBAL) {
+    try { fs.writeFileSync(path.join(globalSessionsDir(), name), body); } catch { /* non-fatal */ }
+  }
   return file;
 }
 
