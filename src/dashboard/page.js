@@ -95,8 +95,11 @@ function page() {
   .k{color:var(--muted)}
   code{background:var(--panel2);padding:1.5px 6px;border-radius:6px;font-size:12px;
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  .cmdline{margin-top:12px;padding:9px 13px;background:var(--panel2);border:1px solid var(--line);
+    border-radius:9px;overflow-x:auto;white-space:nowrap;font-size:12.5px}
+  .cmdline .lbl{color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-right:8px}
   .banner{background:var(--brand-soft);border:1px solid var(--line);border-left:3px solid var(--brand);
-    border-radius:9px;padding:11px 13px;color:var(--muted);font-size:13px;margin-top:8px}
+    border-radius:9px;padding:11px 13px;color:var(--muted);font-size:13px;margin-top:12px}
   table{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
   td,th{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
   th{color:var(--faint);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
@@ -195,9 +198,11 @@ async function select(file){
 }
 function renderDetail(s){
   const f=s.findings||{};const cap=s.capture||{};
-  let h='<div class="head">'+esc(cmd(s))+'</div>';
-  h+='<div class="sub">'+esc((s.timing&&s.timing.startedAt)||'')+' · agent '+esc((s.agent&&s.agent.name)||'unknown')
-    +(s.project&&s.project.name?' · project '+esc(s.project.name):'')+' · '+esc(s.tool.version)+'</div>';
+  const agentName=(s.agent&&s.agent.name)||'unknown agent';
+  const when=(s.timing&&s.timing.startedAt||'').replace('T',' ').slice(0,16);
+  let h='<div class="head">'+esc(agentName)+'</div>';
+  h+='<div class="sub">'+esc(when)+(s.project&&s.project.name?' · '+esc(s.project.name):'')+' · Agent Watcher '+esc(s.tool.version)+'</div>';
+  h+='<div class="cmdline"><span class="lbl">the command you ran</span><code>'+esc(cmd(s))+'</code></div>';
   h+='<div class="banner"><b>What this does not prove:</b> interception is cooperative — an agent can bypass it. "No match" means "not observed", never "did not leave".</div>';
   if((s.unverifiable||[]).length){
     h+='<h2>Unable to verify ('+s.unverifiable.length+') — not clean results</h2>';
