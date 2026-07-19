@@ -171,7 +171,9 @@ function renderList(){
   const rows=SESSIONS.filter(s=>(!day||s.day===day)&&(!q||JSON.stringify([s.agent,s.project,s.vendors,s.destinations,s.command]).toLowerCase().includes(q)));
   const byDay={};for(const s of rows){(byDay[s.day]=byDay[s.day]||[]).push(s);}
   const el=document.getElementById('cards');
-  if(!rows.length){el.innerHTML='<div class="empty">No runs match. Run <code>agentwatch -- &lt;agent&gt;</code> or <code>npm run demo</code>.</div>';return;}
+  if(!rows.length){el.innerHTML=SESSIONS.length
+    ? '<div class="empty">No runs match your filter.</div>'
+    : '<div class="empty"><div class="big">🛰️</div>No runs yet.<br>Run <code>agentwatch -- &lt;your agent&gt;</code> inside a project, then refresh this page.</div>';return;}
   const dotColor={red:'var(--red)',amber:'var(--amber)',green:'var(--green)'};
   el.innerHTML=Object.keys(byDay).sort().reverse().map(d=>
     '<div class="daygroup">'+d+'</div>'+byDay[d].map(s=>{
