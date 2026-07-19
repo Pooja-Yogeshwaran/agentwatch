@@ -50,6 +50,20 @@ words like "exfiltration," "threat," or "breach" in its output, by design.
 
 ---
 
+## Try it in 30 seconds (no agent or credentials needed)
+
+```
+git clone https://github.com/Pooja-Yogeshwaran/agentwatch.git
+cd agentwatch && npm install
+npm run demo
+```
+
+The demo runs a stand-in agent that reads a `.gitignore`'d `.env`, sends file
+contents to a local stand-in "model" endpoint, and uploads a fake git packfile —
+entirely on localhost. agentwatch reports the ignore-rule violation, the secrets,
+the git-history egress, and the read-vs-send divergence. Nothing leaves your
+machine and no real credentials are involved.
+
 ## Install
 
 Requires Node.js ≥ 18.
