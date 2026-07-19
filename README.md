@@ -19,12 +19,16 @@ setting switched off. A tracked `.env` full of real API keys went out in plain
 sight. Catching something like that normally takes a security researcher with
 specialized tooling. Almost nobody else can.
 
-**agentwatch makes it one command.** You run your agent behind it, and it tells you,
-in plain English, exactly what left your machine.
+**Agent Watcher makes it one command.** You run your agent behind it, and it tells
+you, in plain English, exactly what left your machine.
 
 ```bash
-agentwatch -- claude
+agentwatch -- <your agent>      # e.g. claude, codex, aider, grok, cursor-agent
 ```
+
+> **Works with any command-line AI agent** — nothing here is Claude-specific.
+> Replace `<your agent>` with whatever you run; the examples below just use
+> `claude` as a stand-in.
 
 ## What it tells you
 
@@ -62,7 +66,8 @@ project you're working on:
 
 ```bash
 cd path/to/your/project
-node path/to/agentwatch/bin/agentwatch -- claude
+node path/to/agentwatch/bin/agentwatch -- <your agent>
+# examples:  -- claude   |   -- codex -q "fix the bug"   |   -- aider   |   -- grok
 ```
 
 Use the agent exactly as you normally would. (Works the same in your editor — just
