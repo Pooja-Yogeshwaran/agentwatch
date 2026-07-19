@@ -14,6 +14,11 @@ quietly sent more than it told you.
 agentwatch -- claude
 ```
 
+![agentwatch example report — a wrapped agent leaks a gitignored .env, sends git history, and undersells what it read](examples/demo.svg)
+
+> Try it yourself in 30 seconds with `npm run demo` (see below) — no agent or
+> credentials needed.
+
 ---
 
 ## The problem
