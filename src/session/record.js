@@ -135,8 +135,7 @@ function build(capture, cwd, opts = {}) {
     // isolated process + proxy + session, so runs never cross-contaminate.
     project: { path: cwd, name: path.basename(cwd) },
     agent: { command: capture.command, name: agentName || null },
-    env: { os: capture.env.os, node: capture.env.nodeVersion, hostname: capture.env.hostname,
-           decode: capture.capabilities },
+    env: { os: capture.env.os, node: capture.env.nodeVersion, decode: capture.capabilities },
     timing: { startedAt: capture.startedAt, endedAt: capture.endedAt },
     exitCode: capture.exitCode,
     capture: {

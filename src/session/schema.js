@@ -10,7 +10,8 @@ const SCHEMA_VERSION = 1;
 function normalizeForDiff(session) {
   const s = JSON.parse(JSON.stringify(session));
   s.timing = { startedAt: '<ts>', endedAt: '<ts>' };
-  if (s.env) { s.env.hostname = '<host>'; s.env.node = '<node>'; }
+  if (s.env) { s.env.node = '<node>'; }
+  if (s.project) s.project = { name: s.project.name };  // drop absolute path from diffs
   if (s.tool) s.tool.version = '<ver>';
   stripField(s, 'ts', '<ts>');
   stripField(s, 'proxyUrl', '<proxy>');

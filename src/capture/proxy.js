@@ -3,7 +3,6 @@
 // while decoding a copy for inspection. Records TLS failures / pinning and the
 // no-traffic case so the session can honestly say "unable to verify" instead of
 // implying a clean result it never observed.
-const os = require('os');
 const mockttp = require('mockttp');
 // cross-spawn resolves Windows .cmd/.bat shims (npm, codex, claude, …) and
 // handles PATHEXT + arg escaping — plain child_process.spawn can't launch those.
@@ -105,7 +104,7 @@ async function runWrapped(command, { onStdout } = {}) {
     command, requests, seenHosts: [...seenHosts], tlsErrors,
     stdout, stderr, exitCode, startedAt, endedAt, proxyUrl,
     intercepted: requests.length > 0,
-    env: { os: process.platform, nodeVersion: process.version, hostname: os.hostname() },
+    env: { os: process.platform, nodeVersion: process.version },
     capabilities: require('../util/decode').capabilities,
   };
 }
