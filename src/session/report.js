@@ -71,6 +71,15 @@ function render(session) {
       + (s.sourceFiles && s.sourceFiles.length ? `  [source: ${s.sourceFiles.join(', ')}]` : ''));
   }
   p('  (values are never stored or displayed — type, location, and fingerprint only)');
+  const he = session.findings.secrets.highEntropy;
+  if (he && he.count) {
+    p('');
+    p(`  · ${he.count} high-entropy string(s) NOT counted as secrets — these did not`);
+    p('    come from your files and are usually IDs/tokens in the agent\'s own telemetry:');
+    for (const d of he.byDestination.slice(0, 6)) {
+      p(`      ${d.count.toString().padStart(4)} → ${d.host}`);
+    }
+  }
   p('');
 
   // ---- #3 git history ----

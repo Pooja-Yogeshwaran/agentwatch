@@ -97,10 +97,32 @@ function scan(requests, { locateInFiles } = {}) {
     }
   }
 
-  const findings = [...byFingerprint.values()].map((f) => ({
-    ...f, destinations: [...f.destinations],
-  })).sort((a, b) => b.occurrences - a.occurrences);
-  return { findings, scanned: ordered.length };
+  const all = [...byFingerprint.values()].map((f) => ({ ...f, destinations: [...f.destinations] }));
+
+  // Split confirmed secrets from high-entropy noise. A pattern match is always a
+  // confirmed secret. A bare high-entropy string is only a confirmed secret if it
+  // actually came from one of YOUR files (sourceFiles) — otherwise it is almost
+  // always a random ID from the agent's own telemetry, not your data. This is the
+  // fix for the "hundreds of false-positive secrets on telemetry traffic" problem.
+  const confirmed = [];
+  const noise = [];
+  for (const f of all) {
+    if (f.kind === 'pattern' || (f.sourceFiles && f.sourceFiles.length > 0)) confirmed.push(f);
+    else noise.push(f);
+  }
+  confirmed.sort((a, b) => b.occurrences - a.occurrences);
+
+  // Summarize the noise by destination instead of listing every string.
+  const byDest = new Map();
+  for (const f of noise) {
+    for (const d of f.destinations) byDest.set(d, (byDest.get(d) || 0) + 1);
+  }
+  const highEntropy = {
+    count: noise.length,
+    byDestination: [...byDest.entries()].map(([host, count]) => ({ host, count })).sort((a, b) => b.count - a.count),
+  };
+
+  return { findings: confirmed, highEntropy, scanned: ordered.length };
 }
 
 function entropyScan(text, cfg, req, byFingerprint, isAllowed, record) {

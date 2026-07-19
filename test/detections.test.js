@@ -41,10 +41,20 @@ test('secrets: source attribution without storing value', () => {
   assert.deepEqual(f.sourceFiles, ['.env']);
 });
 
-test('secrets: entropy fallback flags high-randomness token', () => {
+test('secrets: high-entropy string NOT from your files is noise, not a counted secret', () => {
+  // e.g. a telemetry session id — high entropy but not your data.
   const tok = 'Zx9Qw3Rt7Yp2Lk8Nm4Vb6Cd0Fg1Hj5';
-  const { findings } = secrets.scan([{ turn: 0, ts: 't', destination: 'd', texts: [`token=${tok}`] }]);
-  assert.ok(findings.some((f) => f.kind === 'entropy' || f.ruleId === 'generic-api-key-assignment'));
+  const r = secrets.scan([{ turn: 0, ts: 't', destination: 'telemetry.example', texts: [`sessionId=${tok}`] }]);
+  assert.equal(r.findings.length, 0, 'not counted as a confirmed secret');
+  assert.ok(r.highEntropy.count >= 1, 'surfaced separately as high-entropy noise');
+  assert.ok(r.highEntropy.byDestination.some((d) => d.host === 'telemetry.example'));
+});
+
+test('secrets: high-entropy string that DID come from your files is a secret', () => {
+  const tok = 'Zx9Qw3Rt7Yp2Lk8Nm4Vb6Cd0Fg1Hj5';
+  const locateInFiles = (v) => (v === tok ? ['.env'] : []);
+  const r = secrets.scan([{ turn: 0, ts: 't', destination: 'api', texts: [`sessionId=${tok}`] }], { locateInFiles });
+  assert.ok(r.findings.some((f) => f.kind === 'entropy' && f.sourceFiles.includes('.env')));
 });
 
 // ---------- packfile ----------

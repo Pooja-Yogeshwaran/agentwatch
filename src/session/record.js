@@ -145,7 +145,7 @@ function build(capture, cwd, opts = {}) {
     findings: {                                   // LEVEL 1: distinct content facts
       contentLeft,
       ignore: ignoreResult,
-      secrets: { findings: secretResult.findings },
+      secrets: { findings: secretResult.findings, highEntropy: secretResult.highEntropy },
       gitHistory: { findings: packResult.findings },
       readVsSend: rvs,
     },
