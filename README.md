@@ -58,9 +58,12 @@ they can't reach your files.
 
 ---
 
-## How to use it — step by step
+## Getting started
 
-### 1. Install (one time)
+Steps 1, 2, and 4 are the same for everyone. The only part that differs by setup is
+**step 3 — where you run your agent.**
+
+### Step 1 — Install (once, common)
 
 Install [Node.js](https://nodejs.org) (v18+) and [Git](https://git-scm.com), then:
 
@@ -70,34 +73,51 @@ cd agentwatch
 npm install
 ```
 
-### 2. Run your agent behind agentwatch
+### Step 2 — See it work first (optional, 30 sec, no agent or credentials)
 
-Go to the project you want to work in, and put `agentwatch --` in front of however
-you'd normally start your agent:
+```bash
+npm run demo
+```
+
+Runs a stand-in agent on localhost that reads a gitignored `.env`, sends it, and
+uploads a fake git bundle — so you can see a full report ([sample](examples/sample-report.txt))
+before pointing agentwatch at a real agent. Nothing leaves your machine.
+
+### Step 3 — Run it on your own agent (this is the part that depends on your setup)
+
+The command is **always the same** — put `agentwatch --` in front of your agent,
+run from inside the project you're working on:
 
 ```bash
 cd C:\path\to\your\project
-node C:\path\to\agentwatch\bin\agentwatch -- claude
+node C:\path\to\agentwatch\bin\agentwatch -- <your agent>
 ```
 
-Use the agent exactly as you normally would. Everything it sends is watched.
+*Where* you run that line depends on how you use AI:
 
-> Running a CLI agent **inside your editor**? Same thing — open the editor's
-> terminal (Zed, VS Code, …) and run the line above there.
+- **A command-line agent** — Claude Code CLI, `codex`, `aider`, `grok`:
+  run the line in any terminal. Example: `... -- claude`.
+- **An agent inside your editor** — Zed, VS Code, JetBrains, etc.:
+  open the editor's **built-in terminal** and run the exact same line there.
+- **A desktop app (Claude Desktop, ChatGPT app) or a website (claude.ai):**
+  not supported — see [What you can and can't monitor](#what-you-can-and-cant-monitor)
+  above for why.
 
-### 3. Read the result
+Then use the agent exactly as you normally would.
 
-When the agent finishes, the report prints **in your terminal**. To see it as a
-visual dashboard across all your runs:
+### Step 4 — See your results (common)
+
+The report prints **in your terminal** when the agent finishes. For a visual view
+of every run:
 
 ```bash
 node C:\path\to\agentwatch\bin\agentwatch dashboard
 ```
 
-This opens **http://127.0.0.1:7777** in your browser. (On Windows you can instead
-**double-click `agentwatch-dashboard.cmd`** — no typing.) The dashboard shows every
-run you've done, on your machine only — it is a *viewer*, not a system monitor; it
-only ever shows the agents you ran through agentwatch.
+Opens **http://127.0.0.1:7777**. (On Windows you can instead **double-click
+`agentwatch-dashboard.cmd`** — no typing.) Use the **"All days"** filter to browse
+every past run; click any run to see its details. It's a local *viewer* — it only
+shows agents you ran through agentwatch, never your whole machine.
 
 ---
 
@@ -159,17 +179,6 @@ explicitly told Claude to *"read all the files,"* it did send the `.env` — bec
 we asked. Left alone, the agent's normal run above was clean.)
 
 ---
-
-## Try it in 30 seconds (no agent or credentials)
-
-```bash
-npm run demo
-```
-
-Runs a stand-in agent that reads a gitignored `.env`, sends it to a local endpoint,
-and uploads a fake git bundle — all on localhost. agentwatch catches every bit and
-prints the report ([full sample](examples/sample-report.txt)). It's a safe way to
-see the output before pointing it at a real agent.
 
 ## How it works
 
