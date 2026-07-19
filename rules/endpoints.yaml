@@ -3,18 +3,23 @@
 # whitelist or judge destinations — every observed destination is reported.
 agents:
   claude:
+    label: "Anthropic / Claude"
     hosts: [api.anthropic.com, statsig.anthropic.com, api.claude.ai]
     modelHosts: [api.anthropic.com]
   grok:
+    label: "xAI / Grok"
     hosts: [api.x.ai, grok.x.com]
     modelHosts: [api.x.ai]
   codex:
+    label: "OpenAI / ChatGPT"
     hosts: [api.openai.com, chatgpt.com]
     modelHosts: [api.openai.com]
   cursor:
+    label: "Cursor"
     hosts: [api2.cursor.sh, api3.cursor.sh, repo42.cursor.sh]
     modelHosts: [api2.cursor.sh]
   gemini:
+    label: "Google / Gemini"
     hosts: [generativelanguage.googleapis.com, cloudcode-pa.googleapis.com]
     modelHosts: [generativelanguage.googleapis.com]
 

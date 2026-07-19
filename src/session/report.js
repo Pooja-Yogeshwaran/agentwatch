@@ -106,11 +106,14 @@ function render(session) {
   p('');
 
   // ---- transport (level 2) ----
-  p('DESTINATIONS (transport-level, supporting context only)');
+  p('DESTINATIONS (transport-level — where the bytes actually went)');
   p('-'.repeat(60));
   for (const d of session.capture.destinations) {
     p(`  ${d.host.padEnd(38)} ${String(d.requests).padStart(4)} req  ${fmtBytes(d.bytesOut).padStart(9)}`
-      + `${d.isModelHost ? '  [model]' : ''}${d.isTelemetry ? '  [telemetry]' : ''}`);
+      + `${d.service ? '  ' + d.service : ''}${d.isModelHost ? '  [model]' : ''}${d.isTelemetry ? '  [telemetry]' : ''}`);
+  }
+  if (session.capture.destinations.every((d) => !d.service)) {
+    p('  (no known AI-vendor host recognized; see rules/endpoints.yaml to add more)');
   }
   p('');
   p('Findings are observations, not allegations. Report issues to the vendor');

@@ -30,9 +30,15 @@ function transport(capture) {
     h.requests++; h.bytesOut += r.bytesOut || 0;
   }
   const modelHosts = new Set();
-  for (const spec of Object.values(ep.agents || {})) for (const mh of spec.modelHosts || []) modelHosts.add(mh);
+  // host -> vendor label (e.g. api.anthropic.com -> "Anthropic / Claude")
+  const hostLabel = new Map();
+  for (const spec of Object.values(ep.agents || {})) {
+    for (const mh of spec.modelHosts || []) modelHosts.add(mh);
+    for (const h of spec.hosts || []) if (spec.label) hostLabel.set(h, spec.label);
+  }
   return [...byHost.values()].map((h) => ({
     ...h,
+    service: hostLabel.get(h.host) || null,   // named vendor, if the host is known
     isTelemetry: telSuffixes.some((s) => h.host === s || h.host.endsWith('.' + s) || h.host.endsWith(s)),
     isModelHost: modelHosts.has(h.host),
   })).sort((a, b) => b.bytesOut - a.bytesOut);
