@@ -119,8 +119,15 @@ because the results are sensitive.
   (macOS/Linux) in the project folder — it opens the dashboard in your browser with
   no typing. The dashboard shows **every run across all your projects** (runs are
   saved to a global store, not just the current folder).
-- **In your editor:** there's an early [VS Code / Cursor extension](extension/) that
-  runs agentwatch and shows reports in a panel — see `extension/README.md`.
+- **Inside your editor:** agentwatch wraps **CLI agents**, so it works in any
+  editor that has a built-in terminal (Zed, VS Code, JetBrains, …) — just run
+  `agentwatch -- <agent>` in that terminal. No special extension needed.
+
+> **Scope:** agentwatch monitors coding agents you run from a terminal
+> (`agentwatch -- claude`, `agentwatch -- codex`, …). It does **not** intercept an
+> editor's *own* built-in AI panel (Copilot, Cursor's chat, Zed's assistant) —
+> that traffic is made by the editor itself, not a process agentwatch launched, so
+> the clean per-process interception doesn't apply. See "How it works" below.
 
 ## How it works
 
