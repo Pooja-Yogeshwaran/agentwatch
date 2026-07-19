@@ -1,0 +1,192 @@
+# agentwatch
+
+**A transparency instrument for AI coding agents.** You prefix whatever agent
+you run, and agentwatch captures and inspects what leaves your machine — then
+answers *file-level* questions, not byte-count questions:
+
+- Did the contents of a `.gitignore`'d file leave?
+- Did credentials leave inside the traffic?
+- Did your full Git history leave, not just current files?
+- The agent said it read 3 files — did the contents of 3 files leave, or 400?
+
+```
+agentwatch -- claude
+agentwatch report
+agentwatch diff <session-a> <session-b>
+```
+
+---
+
+## Read this first: what agentwatch does NOT prove
+
+**Interception is cooperative.** agentwatch works by setting `HTTPS_PROXY` and
+injecting a certificate authority into the process you wrap. An agent that wants
+to avoid this can: open raw sockets, use DNS-over-HTTPS, pin certificates,
+hardcode a bypass, or simply use an HTTP client that ignores proxy environment
+variables. **agentwatch only sees traffic the agent cooperatively routes through
+it.** During development we found that even a *cooperative* runtime (bare Node.js)
+does not honor `HTTPS_PROXY` unless the program opts in — so "nothing captured" is
+never reported as "clean."
+
+Consequences, stated plainly:
+
+- **"No match" means "not observed" — never "did not leave."** Content matching
+  can be defeated by chunking, truncation, or transformation. A clean result is
+  the *absence of evidence*, not evidence of absence.
+- **If a check cannot run, the report says "unable to verify," never "clean."**
+  Undecodable payloads, unrecognized agent output, cert pinning, or bypassed
+  traffic all produce explicit "unable to verify" entries. This is the single
+  most important correctness property of the tool.
+- **Sending your code is normal.** It is how these agents function. Observing it
+  is not an allegation. agentwatch produces *evidence*, not verdicts.
+- **Prompt caching distorts volume.** A cached prefix may cross the wire once and
+  never again, so byte counts undercount exposure and later "absence" is not
+  proof content didn't leave earlier.
+
+agentwatch is a **transparency instrument, not a security tool.** There are no
+words like "exfiltration," "threat," or "breach" in its output, by design.
+
+---
+
+## Install
+
+Requires Node.js ≥ 18.
+
+```
+npm install -g agentwatch
+# or run without installing:
+npx agentwatch -- <your-agent>
+```
+
+Everything (including TLS capture) runs in Node via
+[mockttp](https://github.com/httptoolkit/mockttp) — there is no Python or
+mitmproxy dependency, which keeps install to a single command on Windows, macOS,
+and Linux.
+
+## Usage
+
+```
+agentwatch -- <command...>          Wrap and inspect an agent's egress
+agentwatch report [session.json]    Render the latest (or a given) session
+agentwatch diff <a.json> <b.json>   Diff two sessions (fact-categories first)
+agentwatch compare on=<paths> off=<paths>
+                                    Compare N runs per condition (privacy toggle)
+agentwatch ca [--path|--print|--install|--uninstall]
+                                    Manage the local CA (per-process by default)
+```
+
+Sessions are written to `./.agentwatch/sessions/`.
+
+## The trust story (why you probably don't need to install a certificate)
+
+To read TLS traffic, agentwatch presents its own certificate to the wrapped
+process. The **default and preferred** path injects that certificate into **only
+the wrapped process**, via environment variables it already controls:
+`NODE_EXTRA_CA_CERTS` (Node), `SSL_CERT_FILE` / `REQUESTS_CA_BUNDLE` (Python, Go,
+curl), `GIT_SSL_CAINFO` (git). **No system trust store is touched, and the trust
+dies with the process.** We verified this is sufficient for Node-based agents on
+Windows.
+
+If an agent's runtime ignores those variables, `agentwatch ca` prints an
+explicit, reversible, one-command system-store install (and its removal). It is
+never automatic.
+
+## The four detections
+
+All four sit on a shared **content-matching engine** that fingerprints your local
+files (whitespace-normalized, shingled) and matches those fingerprints against
+decrypted, decompressed, normalized payloads. Every "file X left" claim means its
+**content matched**, not that its path string appeared — those are reported as
+separate facts, because a directory listing mentions hundreds of paths whose
+contents never leave. Content that is resent every turn is **deduplicated to one
+finding with a first-seen turn.**
+
+1. **Ignore-file verifier** — parses `.gitignore`, `.cursorignore`, `.grokignore`,
+   `.aiignore`, etc., fingerprints the files behind those boundaries, and reports
+   a **violation** when their content is observed leaving. The strongest check:
+   you declared the boundary, so there's no judgment call.
+2. **Secret detection on egress** — gitleaks-style pattern rules plus Shannon-
+   entropy detection over outbound payloads. **Values are never stored or
+   displayed** — only the rule id, location, occurrence count, source file, and a
+   non-reversible fingerprint (for dedup). A secret resent every turn is one
+   finding, not forty.
+3. **Packfile / Git-history detector** — detects the `PACK` signature and git
+   bundle headers in egress (including inside multipart bodies and after
+   decompression / base64). A single unambiguous signal that commit *history*
+   left the machine — the larger exposure, since deleted secrets live in history.
+4. **Read-vs-send divergence** — parses the agent's self-reported file reads and
+   compares them against the files whose *content* was independently observed
+   leaving. The only check that tests whether the agent's account of itself is
+   accurate. Also the most format-fragile: unrecognized output degrades to
+   "unable to verify," never a false clean.
+
+## The session record
+
+Each run produces a versioned JSON record with **two-level accounting**:
+
+- **Level 1 — distinct content that left** (the findings): file-level facts, each
+  deduplicated with a first-seen turn. This is where every finding lives.
+- **Level 2 — raw transport** (supporting context only): per-destination request
+  counts and byte volumes.
+
+Records are normalized (timestamps, ports, ordering) so a `diff` shows behavioral
+differences, not format noise. Findings reference paths, types, and fingerprints —
+**never raw secret values and never file contents.** This is enforced by a
+redaction guard and covered by tests.
+
+## The diff engine and agent nondeterminism
+
+LLM agents are nondeterministic: two runs of the same task legitimately read
+different files and make different calls. So a naive per-file diff of two single
+runs attributes agent randomness to whatever you changed. agentwatch therefore:
+
+- diffs **fact categories first** (did ignored files leave? did history leave?
+  which destinations?), with per-file deltas explicitly labeled as noise-prone;
+- supports **N runs per condition** (`compare`), reporting what is *stable across
+  runs within a condition* versus what *changed between conditions* — the honest
+  way to run the privacy-toggle experiment (same task, setting on vs. off).
+
+## Rules as data
+
+Detection patterns, ignore-file formats, known endpoints, and agent output
+parsers are declarative YAML in [`rules/`](rules/). A new pattern next month is a
+new rule, not a code change. Drop overrides in your own rules directory.
+
+## Known limitations
+
+1. **Voluntary compliance** — see the top of this README.
+2. **The trust story is the adoption barrier** — mitigated by per-process
+   injection, not eliminated.
+3. **No baseline for "normal" volume** — which is why the checks are file-level
+   and contract-based, not threshold-based, and why `diff`/`compare` beat
+   absolute numbers.
+4. **Payload formats vary** — gzip, brotli, deflate, multipart, and base64 are
+   handled; anything undecodable (e.g. an unsupported codec, protobuf/gRPC) is
+   reported as "could not inspect," never silently passed.
+5. **Content matching can miss** — report confidence is shown; "no match" is
+   phrased as "not observed."
+6. **Agents are nondeterministic** — addressed structurally by the diff engine.
+7. **Reports go stale** — every record prominently stamps agent and tool version.
+8. **Never a false clean** — if a detection cannot run, the report says so.
+
+## Responsible use
+
+If you use agentwatch to compare named vendors:
+
+- Report findings to the vendor first, with reasonable time to respond, before
+  publication.
+- Report **observations, never intent**: "File X appeared in traffic to Y," not
+  "vendor Z harvests your code."
+- Publish limitations alongside any result.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+## Prior art
+
+The capture layer builds on [mockttp](https://github.com/httptoolkit/mockttp)
+(the engine behind HTTP Toolkit), which solves per-process interception and
+certificate injection. mitmproxy solves the same capture problem in Python. The
+**analysis layer** — content matching, the four file-level detections, the
+session model, and the nondeterminism-aware diff — is agentwatch's contribution.

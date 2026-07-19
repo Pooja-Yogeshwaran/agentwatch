@@ -1,0 +1,43 @@
+{
+  "name": "agentwatch",
+  "version": "0.1.0",
+  "description": "A transparency instrument for AI coding agents: capture and inspect what leaves your machine, at the file level.",
+  "license": "MIT",
+  "bin": {
+    "agentwatch": "bin/agentwatch"
+  },
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "ai",
+    "coding-agent",
+    "privacy",
+    "transparency",
+    "egress",
+    "mitm",
+    "tls",
+    "proxy",
+    "gitignore",
+    "secrets",
+    "observability",
+    "cli"
+  ],
+  "files": [
+    "bin/",
+    "src/",
+    "rules/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "agentwatch": "node bin/agentwatch"
+  },
+  "dependencies": {
+    "ignore": "^5.3.2",
+    "js-yaml": "^4.1.0",
+    "mockttp": "^3.15.0"
+  }
+}

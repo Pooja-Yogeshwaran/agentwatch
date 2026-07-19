@@ -1,0 +1,32 @@
+# Parsers that extract an agent's SELF-REPORTED file reads from its stdout, for
+# the read-vs-send divergence check. Formats vary per agent and change without
+# notice: if no parser matches a session, the check degrades to "unable to
+# verify" — never a false clean. Each pattern's first capture group is a path.
+#
+# `detect.command` matches the wrapped argv[0] (basename, case-insensitive).
+agents:
+  claude:
+    detect: { command: [claude] }
+    readPatterns:
+      - 'Read\(([^)\n]+)\)'                 # ⏺ Read(src/foo.ts)
+      - '(?i)\bread(?:ing)?\s+(?:file\s+)?["`]?([^\s"`\n]+\.[A-Za-z0-9]+)'
+  codex:
+    detect: { command: [codex] }
+    readPatterns:
+      - '(?i)\bread(?:ing)?\s+["`]?([^\s"`\n]+\.[A-Za-z0-9]+)'
+      - 'openFile\(([^)\n]+)\)'
+  cursor:
+    detect: { command: [cursor-agent, cursor] }
+    readPatterns:
+      - '(?i)\bread(?:_file)?\(([^)\n]+)\)'
+  grok:
+    detect: { command: [grok] }
+    readPatterns:
+      - '(?i)\bread(?:ing)?\s+["`]?([^\s"`\n]+\.[A-Za-z0-9]+)'
+
+# Fallback used when the wrapped command matches no agent above. Deliberately
+# conservative; low recall is acceptable because unmatched -> "unable to verify".
+generic:
+  readPatterns:
+    - '(?i)\bread(?:ing)?\s+file[:\s]+["`]?([^\s"`\n]+)'
+    - 'Read\(([^)\n]+)\)'

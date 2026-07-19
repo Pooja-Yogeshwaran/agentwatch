@@ -1,0 +1,9 @@
+# Ignore files agentwatch parses to learn user-declared boundaries.
+# Each uses .gitignore-style semantics (globs, negation with !, comments with #).
+files:
+  - .gitignore
+  - .cursorignore
+  - .grokignore
+  - .aiignore
+  - .codeiumignore
+  - .aiexclude

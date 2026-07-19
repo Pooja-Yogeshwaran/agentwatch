@@ -1,0 +1,29 @@
+# Known agent/model endpoints. Used only to (a) enrich reports and (b) detect
+# the "expected traffic but saw none" case for the bypass check. NOT used to
+# whitelist or judge destinations — every observed destination is reported.
+agents:
+  claude:
+    hosts: [api.anthropic.com, statsig.anthropic.com, api.claude.ai]
+    modelHosts: [api.anthropic.com]
+  grok:
+    hosts: [api.x.ai, grok.x.com]
+    modelHosts: [api.x.ai]
+  codex:
+    hosts: [api.openai.com, chatgpt.com]
+    modelHosts: [api.openai.com]
+  cursor:
+    hosts: [api2.cursor.sh, api3.cursor.sh, repo42.cursor.sh]
+    modelHosts: [api2.cursor.sh]
+  gemini:
+    hosts: [generativelanguage.googleapis.com, cloudcode-pa.googleapis.com]
+    modelHosts: [generativelanguage.googleapis.com]
+
+# Destinations that are telemetry/analytics rather than model turns — labeled so
+# reports can distinguish them. Still fully inspected and reported.
+telemetryHostSuffixes:
+  - statsig.com
+  - statsig.anthropic.com
+  - sentry.io
+  - segment.io
+  - amplitude.com
+  - google-analytics.com

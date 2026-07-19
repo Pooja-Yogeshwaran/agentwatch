@@ -1,0 +1,9 @@
+node_modules/
+.agentwatch/
+*.log
+
+# Local Claude Code / editor settings — machine-specific, not for the repo
+.claude/
+
+# Original design brief (kept locally, not published)
+agentwatch-brief-v3.md
