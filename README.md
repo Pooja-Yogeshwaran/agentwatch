@@ -67,7 +67,7 @@ project you're working on:
 ```bash
 cd path/to/your/project
 node path/to/agentwatch/bin/agentwatch -- <your agent>
-# examples:  -- claude   |   -- codex -q "fix the bug"   |   -- aider   |   -- grok
+# e.g.  -- claude    -- codex    -- aider    -- grok
 ```
 
 Use the agent exactly as you normally would. (Works the same in your editor — just

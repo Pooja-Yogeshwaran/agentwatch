@@ -95,11 +95,8 @@ function page() {
   .k{color:var(--muted)}
   code{background:var(--panel2);padding:1.5px 6px;border-radius:6px;font-size:12px;
     font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-  .cmdline{margin-top:12px;padding:9px 13px;background:var(--panel2);border:1px solid var(--line);
-    border-radius:9px;overflow-x:auto;white-space:nowrap;font-size:12.5px}
-  .cmdline .lbl{color:var(--faint);font-size:11px;text-transform:uppercase;letter-spacing:.5px;margin-right:8px}
-  .banner{background:var(--brand-soft);border:1px solid var(--line);border-left:3px solid var(--brand);
-    border-radius:9px;padding:11px 13px;color:var(--muted);font-size:13px;margin-top:12px}
+  .footnote{color:var(--faint);font-size:12px;line-height:1.5;margin-top:24px;
+    padding-top:14px;border-top:1px solid var(--line)}
   table{width:100%;border-collapse:collapse;font-size:13px;margin-top:4px}
   td,th{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line)}
   th{color:var(--faint);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
@@ -202,8 +199,6 @@ function renderDetail(s){
   const when=(s.timing&&s.timing.startedAt||'').replace('T',' ').slice(0,16);
   let h='<div class="head">'+esc(agentName)+'</div>';
   h+='<div class="sub">'+esc(when)+(s.project&&s.project.name?' · '+esc(s.project.name):'')+' · Agent Watcher '+esc(s.tool.version)+'</div>';
-  h+='<div class="cmdline"><span class="lbl">the command you ran</span><code>'+esc(cmd(s))+'</code></div>';
-  h+='<div class="banner"><b>What this does not prove:</b> interception is cooperative — an agent can bypass it. "No match" means "not observed", never "did not leave".</div>';
   if((s.unverifiable||[]).length){
     h+='<h2>Unable to verify ('+s.unverifiable.length+') — not clean results</h2>';
     h+=dedupe(s.unverifiable).map(u=>'<div class="finding warn"><span class="k">['+esc(u.check)+']</span> '+esc(u.reason)+'</div>').join('');
@@ -235,6 +230,7 @@ function renderDetail(s){
   h+='<h2>Destinations</h2><table><tr><th>Host</th><th>Vendor</th><th class="num">Requests</th><th class="num">Sent</th></tr>';
   (cap.destinations||[]).forEach(d=>h+='<tr><td>'+esc(d.host)+'</td><td>'+esc(d.service||'—')+(d.isModelHost?' <span class="k">[model]</span>':'')+(d.isTelemetry?' <span class="k">[telemetry]</span>':'')+'</td><td class="num">'+d.requests+'</td><td class="num">'+fmtB(d.bytesOut)+'</td></tr>');
   h+='</table>';
+  h+='<div class="footnote">Interception is cooperative — a determined agent could bypass it, so a clean result means nothing was flagged, not proof that nothing left.</div>';
   return h;
 }
 function cmd(s){return Array.isArray(s.agent&&s.agent.command)?s.agent.command.join(' '):(s.agent&&s.agent.command)||'';}
