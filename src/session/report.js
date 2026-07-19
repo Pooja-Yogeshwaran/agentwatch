@@ -50,14 +50,15 @@ function render(session) {
   const left = session.findings.contentLeft || [];
   p(`FILES WHOSE CONTENT LEFT  (${left.length})`);
   p('-'.repeat(60));
+  p('  Context, not an alarm — most content leaving is normal (it is how the agent');
+  p('  answers). Anything concerning (private files, secrets, history) is flagged in');
+  p('  the numbered sections below.');
   if (left.length === 0) {
     p('  No local file content was observed leaving.');
   } else {
     for (const c of left) {
       p(`  • ${c.path}  (${c.coveragePct}% matched, ${c.confidence}) → ${c.destinations.join(', ')}`);
     }
-    p('  (matched by content — the file\'s bytes were found in outbound traffic,');
-    p('   not just its name. Open each file to verify what was sent.)');
   }
   p('');
 

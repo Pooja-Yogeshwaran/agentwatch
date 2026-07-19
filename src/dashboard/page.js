@@ -50,6 +50,7 @@ function page() {
     border-radius:8px;padding:10px 12px;margin:8px 0}
   .finding.ok{border-left-color:var(--green)}
   .finding.warn{border-left-color:var(--amber)}
+  .finding.info{border-left-color:var(--accent)}
   .k{color:var(--muted)}
   code{background:var(--panel2);padding:1px 5px;border-radius:5px;font-size:12px}
   .empty{color:var(--muted);padding:40px 24px;text-align:center}
@@ -143,9 +144,9 @@ function renderDetail(s){
   // files whose content left (so users can double-check exactly what)
   const left=f.contentLeft||[];
   h+='<h2>Files whose content left ('+left.length+')</h2>';
+  h+='<div class="meta">Context, not an alarm — most content leaving is normal (it\\'s how the agent answers). Anything actually concerning (private files, secrets, git history) is flagged separately in the sections below.</div>';
   if(!left.length) h+='<div class="finding ok">No local file content observed leaving.</div>';
-  else{ left.forEach(c=>h+='<div class="finding'+(c.coveragePct>=60?'':' warn')+'"><b>'+esc(c.path)+'</b> <span class="k">'+c.coveragePct+'% matched, '+esc(c.confidence)+' → '+esc((c.destinations||[]).join(', '))+'</span></div>');
-    h+='<div class="meta">Matched by content (the file\\'s bytes were found in traffic, not just its name). Open each file to verify.</div>'; }
+  else{ left.forEach(c=>h+='<div class="finding info"><b>'+esc(c.path)+'</b> <span class="k">'+c.coveragePct+'% matched, '+esc(c.confidence)+' → '+esc((c.destinations||[]).join(', '))+'</span></div>'); }
   // ignore
   const ig=f.ignore||{violations:[],pathOnly:[]};
   h+='<h2>Ignore-file violations</h2>';
