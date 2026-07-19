@@ -106,9 +106,79 @@ by how much they matter:
   Context, not an alarm.
 - 🟢 **Green — clean:** nothing flagged.
 
-A run shows a summary line, then the details: which files' content left, ignore-rule
-violations, secrets, git history, read-vs-send, and the destinations — each host
-labeled with the vendor it belongs to (e.g. `api.anthropic.com → Anthropic / Claude`).
+A run shows a summary line, then the sections below. Here's what each one checks,
+how it decides, and how to read its result.
+
+### The foundation: content matching
+
+Before any check, Agent Watcher **fingerprints every file in your project**
+(whitespace-normalized and chunked) and matches those fingerprints against the
+decrypted, decompressed traffic. This is what makes *"your `.env` left"* mean its
+**content** was actually sent — not just that its name appeared somewhere. A
+directory listing names hundreds of files whose contents never leave; those are
+reported as *"filename appeared"* only, never as a leak.
+
+- **Files whose content left** — 🔵 informational. Example:
+  `package.json — 100% matched, high → api.anthropic.com`. The `%` is how much of
+  the file was found in traffic (100% = the whole file; a lower number = only a
+  snippet). This section is context — most content leaving is normal.
+
+### 1. Ignore-file violations (private files)
+
+- **Checks:** files you marked private — matched by `.gitignore`, `.cursorignore`,
+  `.grokignore`, `.aiignore` — whose contents were sent anyway.
+- **How:** it parses those ignore files into rules, finds which of your files they
+  cover, and checks whether *those* files' content appeared in traffic. Content
+  match = a violation; name-only = a lower-tier note.
+- **Reading it:** 🔴 `✗ .env — content sent (100%, high), declared in .gitignore →
+  api.anthropic.com` means a file you told tools to leave alone actually left.
+  🔵 `~ .env — filename appeared, content not sent` means only its name showed up —
+  no leak. **Red here is the strongest signal: you declared a boundary, and it was
+  crossed.**
+
+### 2. Secrets on egress
+
+- **Checks:** credentials — API keys, passwords, tokens — in the outbound traffic.
+- **How:** pattern rules (gitleaks-style: AWS keys, GitHub tokens, PEM headers,
+  JWTs, connection strings, …) plus Shannon-entropy detection for high-randomness
+  strings. To avoid false alarms, a high-entropy string counts as a secret only if
+  it actually came from one of *your* files; random telemetry IDs are set aside.
+- **Reading it:** 🔴 `✗ generic-secret-assignment (pattern) · fp:dd26… · from .env →
+  api.anthropic.com` = a secret matching that rule, traced to your `.env`, went to
+  Anthropic. **The secret value is never stored or shown** — only its type, a
+  non-reversible fingerprint (`fp:`), its source file, and its destination. A secret
+  resent every turn is one finding, not forty.
+
+### 3. Git history / packfile
+
+- **Checks:** whether your git *history* left — not just current files. This is the
+  bigger exposure, because deleted secrets live forever in history.
+- **How:** it scans the traffic (including inside multipart bodies and after
+  decompression / base64) for the git `PACK` signature and bundle headers, and reads
+  the header to count the objects.
+- **Reading it:** 🔴 `✗ packfile v2, 317 objects → storage.example` means a git
+  packfile containing 317 objects was uploaded — your commit history left the
+  machine. A single, unambiguous flag.
+
+### 4. Read vs send
+
+- **Checks:** whether the agent sent more files than it *said* it read — does its
+  own account match reality?
+- **How:** it parses the agent's output for the files it claims to have read, then
+  compares against the files whose content *actually* left (by content match, never
+  filename mentions).
+- **Reading it:** 🔴 `✗ sent but not reported as read: secret.js` means content of a
+  file left that the agent never mentioned reading. If the agent's output format
+  can't be parsed, it says 🟡 **"unable to verify"** rather than guessing — a false
+  "all match" would be worse than admitting it couldn't check.
+
+### Destinations
+
+- **Checks:** every server the agent talked to, and how much went where.
+- **Reading it:** `api.anthropic.com → Anthropic / Claude [model] · 17 req · 649 KB`.
+  `[model]` = the AI endpoint where your prompts and files go; `[telemetry]` =
+  analytics/logging. A host with no vendor label just isn't in the known-vendor list
+  yet (you can add it in `rules/endpoints.yaml`).
 
 ## Example
 
