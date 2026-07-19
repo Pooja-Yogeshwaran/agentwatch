@@ -2,12 +2,23 @@
 // Starts a local stand-in "model API", runs agentwatch wrapping a mock agent
 // inside the demo repo, and prints the report. No real agent, network, or
 // credentials involved — everything runs on localhost.
+const fs = require('fs');
 const path = require('path');
 const { spawn, spawnSync } = require('child_process');
 const http = require('http');
 
 const root = path.join(__dirname, '..');
 const demoRepo = path.join(__dirname, 'demo-repo');
+
+// The demo's .env is intentionally gitignored (it's the boundary being tested),
+// so it isn't in the repo. Generate it here with obviously-fake values so a
+// fresh clone works and no fake secret is ever committed.
+const envPath = path.join(demoRepo, '.env');
+if (!fs.existsSync(envPath)) {
+  fs.writeFileSync(envPath,
+    'API_KEY=demo1234-fake-key-do-not-use-000abc\n' +
+    'DB_PASSWORD=demo-fake-password-hunter2-supersecret-xyz\n');
+}
 
 // 1. Start the local echo "model" server and learn its port.
 const echo = spawn(process.execPath, [path.join(__dirname, 'echo-server.js')], { stdio: ['ignore', 'pipe', 'inherit'] });
