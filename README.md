@@ -193,13 +193,16 @@ reported as *"filename appeared"* only, never as a leak.
 ## Example
 
 We ran Claude Code on a small project and asked it a normal question — *"what does
-this project do?"* agentwatch showed the files Claude read to answer, and confirmed
-it did **not** send the gitignored `.env`: the filename appeared in a directory
-listing, but its *contents* never left. (agentwatch flags a file only when its
+this project do?"* Agent Watcher showed the files Claude read to answer, and
+confirmed it did **not** send the gitignored `.env`: the filename appeared in a
+directory listing, but its *contents* never left. (It flags a file only when its
 actual bytes are sent — not when its name merely shows up.)
 
-<!-- Screenshot goes here. Save it as docs/screenshot.png, then replace this comment with:
-![agentwatch dashboard showing a real Claude Code run](docs/screenshot.png) -->
+![Agent Watcher dashboard — a real Claude Code run: the summary and the files whose content left, shown as informational rather than alarms](docs/dashboard-1.png)
+
+![Agent Watcher — the gitignored .env's filename appeared but its content was not sent; no secrets and no git history left](docs/dashboard-2.png)
+
+![Agent Watcher — destinations: traffic went to api.anthropic.com (Anthropic / Claude), plus Datadog telemetry and an MCP proxy](docs/dashboard-3.png)
 
 ## How it works
 
